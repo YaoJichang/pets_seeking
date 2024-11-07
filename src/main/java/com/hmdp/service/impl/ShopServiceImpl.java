@@ -32,7 +32,9 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
     @Override
     public Result queryById(Long id) {
         //1、从redis查询商铺缓存
-        String shopJson = stringRedisTemplate.opsForValue().get("cache:shop:" + id);
+        String key = "cache:shop:"+id;
+
+        String shopJson = stringRedisTemplate.opsForValue().get(key);
         //2.判断是否存在
         //3.存在，直接返回
         if(StrUtil.isNotBlank(shopJson)){
@@ -45,11 +47,14 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
 
         //5.不存在，返回错误
         if(shop == null)
-
+        {
+            return Result.fail("店铺不存在！");
+        }
         //6.存在，写入redis
+        stringRedisTemplate.opsForValue().set(key,JSONUtil.toJsonStr(shop));
 
         //7.返回
-        return null;
-        return null;
+        return Result.ok(shop);
+
     }
 }
