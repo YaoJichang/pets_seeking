@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -37,14 +38,14 @@ public class ShopTypeController {
     @Resource
     private StringRedisTemplate stringRedisTemplate;
 
-    //todo 练习：给店铺类型查询业务添加缓存
+
     @GetMapping("list")
     public Result queryTypeList() {
         // 1、从Redis中查询店铺类型
         String key = CACHE_SHOP_TYPE_KEY + UUID.randomUUID().toString(true);
         String shopTypeJSON = stringRedisTemplate.opsForValue().get(key);
 
-        List<ShopType> typeList = null;
+        List<ShopType> typeList = new ArrayList<>();
         // 2、判断缓存是否命中
         if (StrUtil.isNotBlank(shopTypeJSON)) {
             // 2.1 缓存命中，直接返回缓存数据
