@@ -9,7 +9,7 @@ spring:
     username: root
     password: mon6262646
   redis:
-    host: 192.168.3.247
+    host: 192.168.3.240
     port: 6379
     password: mon6262646
     lettuce:
@@ -24,4 +24,4 @@ mybatis-plus:
   type-aliases-package: com.hmdp.entity # 别名扫描包
 logging:
   level:
-    com.hmdp: debug
+    com.hmdp: debug 

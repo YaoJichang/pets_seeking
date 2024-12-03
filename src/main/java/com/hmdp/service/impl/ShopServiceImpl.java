@@ -17,8 +17,7 @@ import javax.annotation.Resource;
 
 import java.util.concurrent.TimeUnit;
 
-import static com.hmdp.utils.RedisConstants.CACHE_SHOP_KEY;
-import static com.hmdp.utils.RedisConstants.CACHE_SHOP_TTL;
+import static com.hmdp.utils.RedisConstants.*;
 
 /**
  * <p>
@@ -37,24 +36,35 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
 
     @Override
     public Result queryById(Long id) {
+        //用空缓存解决缓存穿透问题
         //1、从redis查询商铺缓存
         String key = "cache:shop:"+id;
 
+        //2.判断缓存是否命中
         String shopJson = stringRedisTemplate.opsForValue().get(key);
-        //2.判断是否存在
-        //3.存在，直接返回
+
+        //3.命中，直接返回
         if(StrUtil.isNotBlank(shopJson)){
             Shop shop = JSONUtil.toBean(shopJson, Shop.class);
             return Result.ok(shop);
         }
 
-        //4、不存在，根据id查询数据库(用MyBatis）
+        //缓存未命中，判断缓存中查询的数据是否是空字符串(isNotBlank把null和空字符串都给排除了 而空缓存是“ ”，null是没有缓存）
+        if(shopJson!= null){
+            //缓存为空缓存 说明店铺不存在 直接返回 避免查数据库造成的缓存穿透
+            return Result.fail("店铺不存在");
+        }
+
+
+        //4、如果缓存为null，根据id查询数据库(用MyBatisPlus）
         Shop shop = getById(id);
 
-        //5.不存在，返回错误
+        //5.数据库不存在，返回错误且【缓存一个空值】
         if(shop == null)
         {
+            stringRedisTemplate.opsForValue().set(key,"",CACHE_NULL_TTL,TimeUnit.SECONDS);
             return Result.fail("店铺不存在！");
+
         }
         //6.存在，写入redis，并设置缓存过期时间
         stringRedisTemplate.opsForValue().set(key,JSONUtil.toJsonStr(shop),CACHE_SHOP_TTL, TimeUnit.MINUTES);
